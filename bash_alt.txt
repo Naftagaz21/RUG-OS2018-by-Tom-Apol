@@ -1,0 +1,72 @@
+//disclaimer: this is a reduced grammar based on the one found at:
+//http://my.safaribooksonline.com/book/operating-systems-and-server-administration/unix/1565923472/syntax/lbs.appd.div.3#X2ludGVybmFsX0h0bWxWaWV3P3htbGlkPTEtNTY1OTItMzQ3LTIlMkZsYnMuYXBwZC5kaXYuMyZxdWVyeT0=
+//you should also take into account that the path descriptors are not
+//listed in this grammar. Words may be files, and files often have periods (.),
+//slashes (/), dashes(-) and so on. Technically the slash is a file separator,
+//and not part of file names (neither is the NUL-character ('\0')), but the
+//OS path resolution will solve that for you. If you expand the defintion for
+//word with other characters this grammar should work for this exercise
+
+<simple_list> ::= <pipeline>
+                | <pipeline> '&'
+
+<pipeline> ::= <pipeline> '|' <newline_list> <pipeline>
+             | <simple_command>
+
+//note: first alternative is empty
+<newline_list> ::=
+                 | <newline_list> '\n'
+
+<simple_command> ::= <simple_command_element>
+                   | <simple_command> <simple_command_element>
+
+<simple_command_element> ::= <word>
+                           | <redirection>
+
+<word> ::= <letter>
+         | <word> <letter>
+         | <word> '_'
+
+<letter> ::= a|b|c|d|e|f|g|h|i|j|k|l|m|n|o|p|q|r|s|t|u|v|w|x|y|z|
+             A|B|C|D|E|F|G|H|I|J|K|L|M|N|O|P|Q|R|S|T|U|V|W|X|Y|Z
+
+<redirection> ::= '>' <word>
+                | '<' <word>
+
+////////////////////////////////////////////////////////////////////////////////
+//        (probably) LL(1)-version for recursive descent parsing              //
+////////////////////////////////////////////////////////////////////////////////
+
+<simple_list> ::= <pipeline>
+                | <pipeline> '&'
+
+<pipeline> ::= <simple_command>
+             | <simple_command> <pipeline2>
+
+<pipeline2> ::= '|' <pipeline>
+              | '|' <newline_list> <pipeline>
+
+<newline_list> ::= <newline_list> '\n'
+
+// <simple_command> ::= <simple_command_element> <simple_command>
+<simple_command> ::= <simple_command_element>
+                   | <simple_command_element> <simple_command>
+
+//note: first is empty
+//<simple_command2> ::= <simple_command_element> <simple_command2>
+
+<simple_command_element> ::= <word>
+                           | <redirection>
+
+<word> ::= <letter>
+         | <letter <word2>
+
+//note: first is empty
+<word2> ::= <letter> <word2>
+          | '_' <word2>
+
+<letter> ::= a|b|c|d|e|f|g|h|i|j|k|l|m|n|o|p|q|r|s|t|u|v|w|x|y|z|
+             A|B|C|D|E|F|G|H|I|J|K|L|M|N|O|P|Q|R|S|T|U|V|W|X|Y|Z
+
+<redirection> ::= '>' <word>
+                | '<' <word>
