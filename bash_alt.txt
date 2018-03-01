@@ -46,7 +46,8 @@
 <pipeline2> ::= '|' <pipeline>
               | '|' <newline_list> <pipeline>
 
-<newline_list> ::= <newline_list> '\n'
+<newline_list> ::= '\n'
+                 | <newline_list> '\n'
 
 // <simple_command> ::= <simple_command_element> <simple_command>
 <simple_command> ::= <simple_command_element>
@@ -61,9 +62,11 @@
 <word> ::= <letter>
          | <letter <word2>
 
-//note: first is empty
 <word2> ::= <letter> <word2>
           | '_' <word2>
+          | '.' <word2>
+          | '/' <word2>
+          | '-' <word2>
 
 <letter> ::= a|b|c|d|e|f|g|h|i|j|k|l|m|n|o|p|q|r|s|t|u|v|w|x|y|z|
              A|B|C|D|E|F|G|H|I|J|K|L|M|N|O|P|Q|R|S|T|U|V|W|X|Y|Z

@@ -1,0 +1,6 @@
+CC     = gcc
+CFLAGS = -std=c99 -Wall -g
+PARSER_TEST_HEADER = parser.h
+
+parser_test:    parser_test.c parser.c $(PARSER_TEST_HEADER)
+						$(CC) $(CFLAGS) parser_test.c parser.c -o $@
