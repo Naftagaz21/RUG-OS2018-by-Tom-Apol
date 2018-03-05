@@ -27,10 +27,9 @@ simple_command
 // <pipeline2> ::= '|' <pipeline>
 //               | '|' <newline_list> <pipeline>
 //
-// <newline_list> ::= '\\\n'
-//                  | <newline_list> '\\\n'
+// <newline_list> ::= '\n'
+//                  | <newline_list> '\n'
 //
-// // <simple_command> ::= <simple_command_element> <simple_command>
 // <simple_command> ::= <simple_command_element>
 //                    | <simple_command_element> <simple_command>
 //
@@ -43,7 +42,12 @@ simple_command
 // <word> ::= <letter>
 //          | <letter> <word2>
 //
-// <word2> ::= <letter> <word2>
+// <word2> ::= <letter>
+//           | '_'
+//           | '.'
+//           | '/'
+//           | '-'
+//           | <letter> <word2>
 //           | '_' <word2>
 //           | '.' <word2>
 //           | '/' <word2>
@@ -60,6 +64,7 @@ simple_command
 #include <stdlib.h>
 #include <string.h>
 #include <stdbool.h>
+#include <stdio.h>
 // #include <stddef.h>
 #include "parser.h"
 
@@ -67,15 +72,22 @@ bool parseRedirection(char **sentence, size_t *current_index_ptr)
 {
   size_t current_index_backup = *current_index_ptr;
   if(sentence[*current_index_ptr] == NULL)
+  {
+    printf("parseRedirection: sentence[%ld] == NULL\n", *current_index_ptr);
     return false;
+  }
 
   if(strcmp(sentence[*current_index_ptr], ">") != 0 && strcmp(sentence[*current_index_ptr], "<") != 0)
+  {
+    printf("parseRedirection: sentence[%ld] != \"<\" or \">\"\n", *current_index_ptr);
     return false;
+  }
 
   ++(*current_index_ptr);
   if(!parseWord(sentence, current_index_ptr))
   {
     *current_index_ptr = current_index_backup;
+    printf("parseRedirection: parseWord failed at index %ld\n", *current_index_ptr);
     return false;
   }
   return true;
@@ -84,7 +96,10 @@ bool parseRedirection(char **sentence, size_t *current_index_ptr)
 bool parseLetter(char **sentence, size_t *current_index_ptr, size_t *current_letter_index_ptr)
 {
   if(sentence[*current_index_ptr] == NULL)
+  {
+    printf("parseLetter: sentence[%ld] == NULL\n", *current_index_ptr);
     return false;
+  }
 
   char letter = sentence[*current_index_ptr][*current_letter_index_ptr];
   if((letter >= 'a' && letter <= 'z') || (letter >= 'A' && letter <= 'Z'))
@@ -92,16 +107,25 @@ bool parseLetter(char **sentence, size_t *current_index_ptr, size_t *current_let
     ++(*current_letter_index_ptr);
     return true;
   }
+  printf("parseLetter: %c is not valid; at index %ld\n", letter, *current_index_ptr);
   return false;
 }
 
 bool parseWord2(char **sentence, size_t *current_index_ptr, size_t *current_letter_index_ptr)
 {
+  // size_t current_index_backup = *current_index_ptr;
   if(sentence[*current_index_ptr] == NULL)
-  return false;
+  {
+    printf("parseWord2: sentence[%ld] == NULL\n", *current_index_ptr);
+    return false;
+  }
 
+  //can be empty
   if(sentence[*current_index_ptr][*current_letter_index_ptr] == '\0')
+  {
+    printf("parseWord2: sentence[%ld][%ld] == '\\0'\n", *current_index_ptr, *current_letter_index_ptr);
     return true;
+  }
 
   if(!parseLetter(sentence, current_index_ptr, current_letter_index_ptr))
   {
@@ -116,21 +140,34 @@ bool parseWord2(char **sentence, size_t *current_index_ptr, size_t *current_lett
       case '.' :
         break;
       default :
-      return false;
+        printf("parseWord2: letter = %c, which is invalid; at index %ld\n", sentence[*current_index_ptr][*current_letter_index_ptr], *current_index_ptr);
+        return false;
     }
     ++(*current_letter_index_ptr);
   }
-  return parseWord2(sentence, current_index_ptr, current_letter_index_ptr);
+  if(!parseWord2(sentence, current_index_ptr, current_letter_index_ptr))
+  {
+    // *current_index_ptr = current_index_backup;
+    // printf("parseWord2: parseWord2 (rec) failed at index %ld\n", *current_index_ptr);
+    // return false;
+  }
+  return true;
 }
 
 bool parseWord(char **sentence, size_t *current_index_ptr)
 {
   if(sentence[*current_index_ptr] == NULL)
+  {
+    printf("parseWord: sentence[%ld] == NULL\n", *current_index_ptr);
     return false;
+  }
 
   size_t current_letter_index = 0;
   if(!parseLetter(sentence, current_index_ptr, &current_letter_index))
+  {
+    printf("parseWord: parseLetter failed at index %ld\n", *current_index_ptr);
     return false;
+  }
 
 
   if(sentence[*current_index_ptr][current_letter_index] != '\0')
@@ -143,7 +180,10 @@ bool parseSimpleCommandElement(char **sentence, size_t *current_index_ptr)
 {
   size_t current_index_backup = *current_index_ptr;
   if(sentence[*current_index_ptr] == NULL)
+  {
+    printf("parseSimpleCommand: sentence[%ld] == NULL\n", *current_index_ptr);
     return false;
+  }
 
   if(!parseWord(sentence, current_index_ptr))
   {
@@ -151,6 +191,7 @@ bool parseSimpleCommandElement(char **sentence, size_t *current_index_ptr)
     if(!parseRedirection(sentence, current_index_ptr))
     {
       *current_index_ptr = current_index_backup;
+      printf("parseSimpleCommand: parseWord and parseRedirection failed at index %ld\n", *current_index_ptr);
       return false;
     }
   }
@@ -160,18 +201,22 @@ bool parseSimpleCommandElement(char **sentence, size_t *current_index_ptr)
 bool parseSimpleCommand(char **sentence, size_t *current_index_ptr)
 {
   size_t current_index_backup = *current_index_ptr;
-  if(sentence[*current_index_ptr] == NULL)
-  return false;
+  if(sentence[*current_index_ptr] == NULL){
+    printf("parseSimpleCommand: sentence[%ld] == NULL\n", *current_index_ptr);
+    return false;
+  }
 
   if(!parseSimpleCommandElement(sentence, current_index_ptr))
   {
     *current_index_ptr = current_index_backup;
+    printf("parseSimpleCommand: parseSimpleCommandElement failed at index %ld\n", *current_index_ptr);
     return false;
   }
 
   if(!parseSimpleCommand(sentence, current_index_ptr))
   {
-    *current_index_ptr = current_index_backup;
+    // *current_index_ptr = current_index_backup;
+    printf("parseSimpleCommand: parseSimpleCommand (rec) failed at index %ld\n", *current_index_ptr);
   }
   return true;
 }
@@ -179,13 +224,18 @@ bool parseSimpleCommand(char **sentence, size_t *current_index_ptr)
 bool parseNewlineList(char **sentence, size_t *current_index_ptr)
 {
   // size_t current_index_backup = *current_index_ptr;
-  if(sentence[*current_index_ptr] == NULL)
+  if(sentence[*current_index_ptr] == NULL){
+    printf("parseNewlineList: sentence[%ld] == NULL\n", *current_index_ptr);
     return false;
+  }
+
   if(strcmp(sentence[*current_index_ptr], "\\\n") != 0) //TODO: check if this should be "\n" instead.
   {
+    printf("parseNewlineList: sentence[%ld] != \\n\n", *current_index_ptr);
     return false;
   }
   ++(*current_index_ptr);
+  // current_index_backup = *current_index_ptr;
   //TODO: do we need to reset if this returns false?
   parseNewlineList(sentence, current_index_ptr);
   return true;
@@ -195,18 +245,23 @@ bool parsePipeLine2(char **sentence, size_t *current_index_ptr)
 {
   size_t current_index_backup = *current_index_ptr;
   if(sentence[*current_index_ptr] == NULL)
+  {
+    printf("parsePipeLine2: sentence[%ld] == NULL\n", *current_index_ptr);
     return false;
+  }
 
   if(strcmp(sentence[*current_index_ptr], "|") != 0)
   {
+    printf("parsePipeLine2: sentence != \"|\" at index %ld\n", *current_index_ptr);
     return false;
   }
   ++(*current_index_ptr);
   parseNewlineList(sentence, current_index_ptr);
-
+  current_index_backup = *current_index_ptr;
   if(!parsePipeLine(sentence, current_index_ptr))
   {
     *current_index_ptr = current_index_backup;
+    printf("parsePipeLine2: parsePipeLine failed at index %ld\n", *current_index_ptr);
     return false;
   }
   return true;
@@ -218,15 +273,22 @@ bool parsePipeLine(char **sentence, size_t *current_index_ptr)
 {
   size_t current_index_backup = *current_index_ptr;
   if(sentence[*current_index_ptr] == NULL)
-    return false;
-
-  if(!parseSimpleCommand(sentence, current_index_ptr)){
-    *current_index_ptr = current_index_backup;
+  {
+    printf("parsePipeLine: sentence[%ld] == NULL\n", *current_index_ptr);
     return false;
   }
 
+  if(!parseSimpleCommand(sentence, current_index_ptr)){
+    *current_index_ptr = current_index_backup;
+    printf("parsePipeLine: parseSimpleCommand failed at index %ld\n", *current_index_ptr);
+    return false;
+  }
+
+  current_index_backup = *current_index_ptr;
+
   if(!parsePipeLine2(sentence, current_index_ptr))
     *current_index_ptr = current_index_backup;
+  printf("parsePipeLine returns true\n");
   return true;
 }
 
@@ -234,18 +296,30 @@ bool parsePipeLine(char **sentence, size_t *current_index_ptr)
 bool parseInput(char **sentence)
 {
   size_t currentIndex = 0;
-  if(sentence[currentIndex] == NULL)
+  if(sentence[currentIndex] == NULL){
+    printf("sentence[%ld] == NULL\n", currentIndex);
     return false;
+  }
 
   if(!parsePipeLine(sentence, &currentIndex))
+  {
+    printf("parseInput: parsePipeLine failed at index %ld\n", currentIndex);
     return false;
+  }
 
-  if(strcmp(sentence[currentIndex], "&") == 0)
+  printf("currentIndex = %ld\n", currentIndex);
+  if(sentence[currentIndex] != NULL && strcmp(sentence[currentIndex], "&") == 0)
+  {
+    printf("parseInput: sentence[currentIndex] == & :+1:\n");
     ++currentIndex;
+  }
 
   //check whether the expression is finished
   if(sentence[currentIndex] != NULL)
+  {
+    printf("sentence[%ld] != NULL, as it is %s\n", currentIndex, sentence[currentIndex]);
     return false;
+  }
 
   return true;
 }

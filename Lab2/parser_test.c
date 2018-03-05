@@ -28,18 +28,34 @@ int main(int argc, char *argv[])
     fprintf(stderr, "no tokens to parse\n");
     exit(EXIT_FAILURE);
   }
-
+  // printf("tokenAmnt = %ld\n", tokenAmnt);
   strcpy(argv1_copy, argv[1]);
+  // printf("argv1_copy = %s\n", argv1_copy);
   char **strings = malloc((tokenAmnt+1) * sizeof(char*));
+  if(strings == NULL)
+  {
+    perror("malloc");
+    exit(EXIT_FAILURE);
+  }
+
   char_ptr = strtok(argv1_copy, " ");
   size_t i = 0;
   while(char_ptr != NULL)
   {
     strings[i] = malloc(strlen(char_ptr)+1);
     strcpy(strings[i], char_ptr);
+    // printf("char_ptr = %s\n", char_ptr);
+    char_ptr = strtok(NULL, " ");
     ++i;
   }
   strings[i] = NULL;
+  // i = 0;
+  // while(strings[i]!=NULL)
+  // {
+  //   printf("strings[%ld] = %s\n", i, strings[i]);
+  //   ++i;
+  // }
+
 
   fprintf(stdout, "\"%s\" is valid: %s\n", argv[1], parseInput(strings) ? "true" : "false");
 
@@ -49,6 +65,5 @@ int main(int argc, char *argv[])
     free(strings[i]);
   }
   free(strings);
-  
   return 0;
 }
