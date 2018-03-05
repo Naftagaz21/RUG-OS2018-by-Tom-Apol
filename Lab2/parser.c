@@ -4,6 +4,20 @@
 //      This specification is (currently) slightly different from what the exercise may describe,
 //      but we assumed it was not incredibly significant in this course.
 //
+/*
+simple_list
+=
+pipeline
+=
+simple_command pipeline2
+=
+simple_command
+
+
+
+
+
+*/
 // <simple_list> ::= <pipeline>
 //                 | <pipeline> '&'
 //
@@ -86,6 +100,9 @@ bool parseWord2(char **sentence, size_t *current_index_ptr, size_t *current_lett
   if(sentence[*current_index_ptr] == NULL)
   return false;
 
+  if(sentence[*current_index_ptr][*current_letter_index_ptr] == '\0')
+    return true;
+
   if(!parseLetter(sentence, current_index_ptr, current_letter_index_ptr))
   {
     switch(sentence[*current_index_ptr][*current_letter_index_ptr])
@@ -109,13 +126,12 @@ bool parseWord2(char **sentence, size_t *current_index_ptr, size_t *current_lett
 bool parseWord(char **sentence, size_t *current_index_ptr)
 {
   if(sentence[*current_index_ptr] == NULL)
-  return false;
+    return false;
 
   size_t current_letter_index = 0;
   if(!parseLetter(sentence, current_index_ptr, &current_letter_index))
-  {
     return false;
-  }
+
 
   if(sentence[*current_index_ptr][current_letter_index] != '\0')
     parseWord2(sentence, current_index_ptr, &current_letter_index);
@@ -127,9 +143,9 @@ bool parseSimpleCommandElement(char **sentence, size_t *current_index_ptr)
 {
   size_t current_index_backup = *current_index_ptr;
   if(sentence[*current_index_ptr] == NULL)
-  return false;
-  if(!parseWord(sentence, current_index_ptr))
+    return false;
 
+  if(!parseWord(sentence, current_index_ptr))
   {
     *current_index_ptr = current_index_backup;
     if(!parseRedirection(sentence, current_index_ptr))
@@ -165,7 +181,7 @@ bool parseNewlineList(char **sentence, size_t *current_index_ptr)
   // size_t current_index_backup = *current_index_ptr;
   if(sentence[*current_index_ptr] == NULL)
     return false;
-  if(strcmp(sentence[*current_index_ptr], "\\\n") != 0)
+  if(strcmp(sentence[*current_index_ptr], "\\\n") != 0) //TODO: check if this should be "\n" instead.
   {
     return false;
   }
@@ -185,7 +201,7 @@ bool parsePipeLine2(char **sentence, size_t *current_index_ptr)
   {
     return false;
   }
-
+  ++(*current_index_ptr);
   parseNewlineList(sentence, current_index_ptr);
 
   if(!parsePipeLine(sentence, current_index_ptr))
@@ -225,10 +241,9 @@ bool parseInput(char **sentence)
     return false;
 
   if(strcmp(sentence[currentIndex], "&") == 0)
-  {
     ++currentIndex;
-  }
 
+  //check whether the expression is finished
   if(sentence[currentIndex] != NULL)
     return false;
 
