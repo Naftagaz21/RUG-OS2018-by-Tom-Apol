@@ -27,8 +27,8 @@ simple_command
 // <pipeline2> ::= '|' <pipeline>
 //               | '|' <newline_list> <pipeline>
 //
-// <newline_list> ::= '\n'
-//                  | <newline_list> '\n'
+// <newline_list> ::= '\\\n'
+//                  | <newline_list> '\\\n'
 //
 // <simple_command> ::= <simple_command_element>
 //                    | <simple_command_element> <simple_command>

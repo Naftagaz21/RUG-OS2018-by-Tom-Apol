@@ -1,6 +1,6 @@
 CC     = c99
 CFLAGS = -D_DEFAULT_SOURCE -Wall -g
-PARSER_TEST_HEADER = parser.h
+# PARSER_TEST_HEADER = parser.h
 
-parser_test:    parser_test.c parser.c $(PARSER_TEST_HEADER)
+parser_test:    parser_test.c parser.c parser.h
 						$(CC) $(CFLAGS) parser_test.c parser.c -o $@
