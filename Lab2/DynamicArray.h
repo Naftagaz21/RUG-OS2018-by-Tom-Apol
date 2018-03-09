@@ -8,11 +8,12 @@ typedef struct DynamicArray {
   void** elems;
   size_t size;
   size_t capacity;
+  int internalArrayPersistence;
   void (*elemDestructorFunc)(void *elem);
 } DynamicArray;
 
 //returns NULL if allocation failed
-DynamicArray * DYNARR_makeNewArray(size_t elemSize, void(*elemDestructorFunc)(void *elem));
+DynamicArray * DYNARR_makeNewArray(size_t elemSize, void(*elemDestructorFunc)(void *elem), int internalArrayPersistence);
 
 //frees array and calls the elementDestructorFunction that was passed at its creation to free its elements.
 void DYNARR_destroyArray(DynamicArray *arr);

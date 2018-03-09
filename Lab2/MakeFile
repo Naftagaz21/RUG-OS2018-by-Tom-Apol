@@ -1,6 +1,8 @@
 CC     = c99
 CFLAGS = -D_DEFAULT_SOURCE -Wall -g
+DYNAMIC_CFILES = DynamicArray.c DynamicString.c
+DYNAMIC_HEADERS = DynamicArray.h DynamicString.h
 PARSER_TEST_HEADER = parser.h
 
-parser_test:    parser_test.c parser.c $(PARSER_TEST_HEADER)
-						$(CC) $(CFLAGS) parser_test.c parser.c -o $@
+parser_test:    parser_test.c parser.c $(DYNAMIC_CFILES) $(PARSER_TEST_HEADER) $(DYNAMIC_HEADERS)
+						$(CC) $(CFLAGS) parser_test.c parser.c $(DYNAMIC_CFILES) -o $@

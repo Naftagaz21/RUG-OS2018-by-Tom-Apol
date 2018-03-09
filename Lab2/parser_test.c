@@ -1,69 +1,129 @@
-
-#include <stdio.h>
 #include <stdlib.h>
+#include <stdio.h>
 #include <string.h>
+#include <errno.h>
 #include "parser.h"
+#include "DynamicString.h"
+#include "DynamicArray.h"
+
+//reads input from stream and returns a c-string.
+//returns NULL on failure.
+//completely skips over "\\\n", to save our parser some work.
+//callers must free the allocated string.
+char * readInput(FILE *stream)
+{
+  DynamicString *string_ptr;
+  if(makeDynamicString(string_ptr) < 0)
+  {
+    fprintf(stderr, "error in readInput: could not make a dynamic string\n");
+    return NULL;
+  }
+
+  char c, c2;
+  while((c = fgetc(stream)) != '\n') //a lone \n signals the end of the input
+  {
+    //disregard "\\\n" sequences,
+    if(c == '\\')
+    {
+      if((c2 = fgetc(stream)) != '\n')
+      {
+        appendCharToDynString(c);
+        appendCharToDynString(c2);
+      }
+    }
+    appendCharToDynString(string_ptr, c);
+  }
+  appendCharToDynString(string_ptr, '\0');
+
+  char *retval = string_ptr->string;
+  //cleanup as we no longer use string_ptr anymore.
+  free(string_ptr);
+  return retval;
+}
+
+/* string destructor for use with DYNARR_makeNewArray.
+ * since we are supposed to use the c99 compiler and not the gcc compiler,
+ * this function is defined globally instead of inside functions calling
+ * DYNARR_makeNewArray.
+ */
+void myStringDestructor(char *string)
+{
+  free(string);
+}
+
+//will split input into multiple strings.
+//ends array with a NULL pointer.
+//returns NULL on failure.
+char **tokenise(char *input)
+{
+  DynamicArray *arr = DYNARR_makeNewArray(sizeof(char *), myStringDestructor);
+  if(arr == NULL)
+    return NULL;
+
+  char *token = strtok(input, " ");
+  char *buffer;
+  int persistance; //exists for the sole purpose of code readability
+
+  while(1) //breaks when token == NULL, after storing a terminating NULL pointer in our array.
+  {
+    if(token != NULL)
+    {
+      buffer = malloc((strlen(token) +1) * sizeof(char));
+      if(buffer == NULL)
+      {
+        perror("malloc");
+        DYNARR_destroyArray(arr, persistance=0);
+        return NULL;
+      }
+      strcpy(buffer, token);
+    }
+
+    if(DYNARR_addElem(arr, (void *) buffer) < 0)
+    {
+      fprintf("error in tokenise: failed DYNARR_addElem");
+      DYNARR_destroyArray(arr, persistance=0);
+      free(buffer);
+      return NULL;
+    }
+
+    if(token == NULL)
+      break;
+  }
+  return (char *) DYNARR_destroyArray(arr, persistance=1);
+}
+
 
 int main(int argc, char *argv[])
 {
-  if(argc != 2)
+  char *input, *input_copy, **strings;
+  input = readInput(stdin);
+  if(input == NULL)
   {
-    fprintf(stderr, "argc should be 2, while argc = %d\n", argc);
     exit(EXIT_FAILURE);
   }
 
-  char* argv1_copy = malloc((strlen(argv[1])+1)*sizeof(char));
-  strcpy(argv1_copy, argv[1]);
-
-  size_t tokenAmnt = 0;
-  char* char_ptr = strtok(argv1_copy, " ");
-  while(char_ptr != NULL)
-  {
-    ++tokenAmnt;
-    char_ptr = strtok(NULL, " ");
-  }
-
-  if(tokenAmnt == 0)
-  {
-    fprintf(stderr, "no tokens to parse\n");
-    exit(EXIT_FAILURE);
-  }
-  // printf("tokenAmnt = %ld\n", tokenAmnt);
-  strcpy(argv1_copy, argv[1]);
-  // printf("argv1_copy = %s\n", argv1_copy);
-  char **strings = malloc((tokenAmnt+1) * sizeof(char*));
-  if(strings == NULL)
+  //for debugging
+  input_copy = malloc((strlen(input)+1) * sizeof(char));
+  if(input_copy == NULL)
   {
     perror("malloc");
+    free(input);
+    exit(EXIT_FAILURE);
+  }
+  strcpy(input_copy, input);
+
+  strings = tokenise(input_copy);
+  if(strings == NULL)
+  {
     exit(EXIT_FAILURE);
   }
 
-  char_ptr = strtok(argv1_copy, " ");
-  size_t i = 0;
-  while(char_ptr != NULL)
-  {
-    strings[i] = malloc(strlen(char_ptr)+1);
-    strcpy(strings[i], char_ptr);
-    // printf("char_ptr = %s\n", char_ptr);
-    char_ptr = strtok(NULL, " ");
-    ++i;
-  }
-  strings[i] = NULL;
-  // i = 0;
-  // while(strings[i]!=NULL)
-  // {
-  //   printf("strings[%ld] = %s\n", i, strings[i]);
-  //   ++i;
-  // }
+  //for debugging
+  fprintf(stdout, "\"%s\" is valid: %s\n", input, parseInput(strings) ? "true" : "false");
 
+  free(input);
+  free(input_copy);
 
-  fprintf(stdout, "\"%s\" is valid: %s\n", argv[1], parseInput(strings) ? "true" : "false");
-
-  free(argv1_copy);
-  for(size_t i = 0; i < tokenAmnt; ++i)
-  {
-    free(strings[i]);
-  }
   free(strings);
   return 0;
 }
