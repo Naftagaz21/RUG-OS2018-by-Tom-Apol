@@ -5,7 +5,7 @@
  * it is assumed that the elements do not have to be freed when destroying the array.
  * Returns NULL if allocation failed.
  */
-DynamicArray * DYNARR_makeNewArray(size_t elemSize, void(*elemDestructorFunc)(void *elem),)
+DynamicArray * DYNARR_makeNewArray(size_t elemSize, void(*elemDestructorFunc)(void *elem))
 {
   DynamicArray *arr = malloc(sizeof(DynamicArray));
   if(arr == NULL)
@@ -45,7 +45,7 @@ void * DYNARR_destroyArray(DynamicArray *arr, int internalArrayPersistence)
 /* When successful, returns 0.
  * On failure, leaves the array intact and returns -1.
  */
-void DYNARR_resizeArr(DynamicArray *arr, size_t newCapacity)
+int DYNARR_resizeArr(DynamicArray *arr, size_t newCapacity)
 {
   void *tempPtr = realloc(arr->elems, newCapacity);
   if(tempPtr == NULL)
@@ -56,6 +56,10 @@ void DYNARR_resizeArr(DynamicArray *arr, size_t newCapacity)
   return 0;
 }
 
+
+/* When successful, returns 0.
+ * On failure, leaves the array intact and returns -1.
+ */
 int DYNARR_addElem(DynamicArray *arr, void *elem)
 {
   if(arr->size == arr->capacity)

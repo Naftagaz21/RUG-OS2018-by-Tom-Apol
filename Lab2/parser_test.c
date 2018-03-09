@@ -12,8 +12,8 @@
 //callers must free the allocated string.
 char * readInput(FILE *stream)
 {
-  DynamicString *string_ptr;
-  if(makeDynamicString(string_ptr) < 0)
+  DynamicString *string_ptr = makeDynamicString();
+  if(string_ptr == NULL)
   {
     fprintf(stderr, "error in readInput: could not make a dynamic string\n");
     return NULL;
@@ -27,8 +27,8 @@ char * readInput(FILE *stream)
     {
       if((c2 = fgetc(stream)) != '\n')
       {
-        appendCharToDynString(c);
-        appendCharToDynString(c2);
+        appendCharToDynString(string_ptr, c);
+        appendCharToDynString(string_ptr, c2);
       }
     }
     appendCharToDynString(string_ptr, c);
@@ -46,7 +46,7 @@ char * readInput(FILE *stream)
  * this function is defined globally instead of inside functions calling
  * DYNARR_makeNewArray.
  */
-void myStringDestructor(char *string)
+void myStringDestructor(void * string)
 {
   free(string);
 }
@@ -78,9 +78,9 @@ char **tokenise(char *input)
       strcpy(buffer, token);
     }
 
-    if(DYNARR_addElem(arr, (void *) buffer) < 0)
+    if(DYNARR_addElem(arr, token == NULL ? NULL : (void *) buffer) < 0)
     {
-      fprintf("error in tokenise: failed DYNARR_addElem");
+      fprintf(stderr, "error in tokenise: failed DYNARR_addElem\n");
       DYNARR_destroyArray(arr, persistance=0);
       free(buffer);
       return NULL;
@@ -88,8 +88,9 @@ char **tokenise(char *input)
 
     if(token == NULL)
       break;
+    token = strtok(NULL, " ");
   }
-  return (char *) DYNARR_destroyArray(arr, persistance=1);
+  return (char **) DYNARR_destroyArray(arr, persistance=1);
 }
 
 
@@ -101,6 +102,8 @@ int main(int argc, char *argv[])
   {
     exit(EXIT_FAILURE);
   }
+
+  // printf("input = %s\n", input);
 
   //for debugging
   input_copy = malloc((strlen(input)+1) * sizeof(char));
@@ -120,6 +123,13 @@ int main(int argc, char *argv[])
 
   //for debugging
   fprintf(stdout, "\"%s\" is valid: %s\n", input, parseInput(strings) ? "true" : "false");
+
+  // int i = 0;
+  // while(strings[i] != NULL)
+  // {
+  //   printf("strings[%d] = %s\n", i, strings[i]);
+  //   ++i;
+  // }
 
   free(input);
   free(input_copy);

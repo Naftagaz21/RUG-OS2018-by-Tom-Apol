@@ -8,19 +8,29 @@ typedef struct DynamicArray {
   void** elems;
   size_t size;
   size_t capacity;
-  int internalArrayPersistence;
   void (*elemDestructorFunc)(void *elem);
 } DynamicArray;
 
 //returns NULL if allocation failed
-DynamicArray * DYNARR_makeNewArray(size_t elemSize, void(*elemDestructorFunc)(void *elem), int internalArrayPersistence);
+DynamicArray * DYNARR_makeNewArray(size_t elemSize, void(*elemDestructorFunc)(void *elem));
 
-//frees array and calls the elementDestructorFunction that was passed at its creation to free its elements.
-void DYNARR_destroyArray(DynamicArray *arr);
+/* Frees array and calls the elementDestructorFunction that was passed at its creation to free its elements.
+ * if elementDestructorFunction == NULL, individual elements are not freed (useful in case the elements are located on the stack)
+ * if internalArrayPersistence == 1, the internal array is not freed and a pointer towards it is returned.
+ *   else the entire array is freed and NULL is returned.
+ */
+void * DYNARR_destroyArray(DynamicArray *arr, int internalArrayPersistence);
 
-//returns pointer to new array. If reallocating fails, returns pointer to original array.
-void DYNARR_resizeArr(DynamicArray *arr, size_t newCapacity);
+/* Resizes the array to a particular size.
+ * When successful, returns 0.
+ * On failure, leaves the array intact and returns -1.
+ */
+int DYNARR_resizeArr(DynamicArray *arr, size_t newCapacity);
 
-void DYNARR_addElem(DynamicArray *arr, void *elem);
+/* Adds an element to the array and resizes the array if necessary.
+ * When successful, returns 0.
+ * On failure, leaves the array intact and returns -1.
+ */
+int DYNARR_addElem(DynamicArray *arr, void *elem);
 
 #endif

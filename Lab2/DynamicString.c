@@ -4,34 +4,28 @@
 
 #define DYNAMIC_STRING_START_LENGTH 16
 
-typedef struct DynamicString {
-  char *string;
-  size_t length;
-  size_t capacity;
-} Dynamic_String;
-
-//returns 0 on success, -1 on failure
-int makeDynamicString(DynamicString *dest)
+//returns a DynamicString pointer on success, NULL on failure
+DynamicString * makeDynamicString()
 {
-  dest = malloc(sizeof(DynamicString));
-  if(dest == NULL)
+  DynamicString *dynString = malloc(sizeof(DynamicString));
+  if(dynString == NULL)
   {
     perror("malloc");
-    return -1;
+    return NULL;
   }
 
-  dest->string = malloc(DYNAMIC_STRING_START_LENGTH * sizeof(char));
-  if(dest->string == NULL)
+  dynString->string = malloc(DYNAMIC_STRING_START_LENGTH * sizeof(char));
+  if(dynString->string == NULL)
   {
     free(dynString);
     perror("malloc");
-    return -1;
+    return NULL;
   }
 
-  dest->length = 0;
-  dest->capacity = DYNAMIC_STRING_START_LENGTH;
+  dynString->length = 0;
+  dynString->capacity = DYNAMIC_STRING_START_LENGTH;
 
-  return 0;
+  return dynString;
 }
 
 //returns 0 on success, -1 on failure.
@@ -52,6 +46,6 @@ int appendCharToDynString(DynamicString *dynString, const char c)
   }
 
   dynString->string[dynString->length] = c;
-
+  ++dynString->length;
   return 0;
 }

@@ -24,10 +24,15 @@
 
 /* sa_mask: somehow use this to not get interrupted while you're in the signal handler */
 
+void printPingPong(int whoAmI)
+{
+  printf(whoAmI ? "Ping\n" : "...Pong\n");
+}
+
+
+
 int main(int argv, char* argv[])
 {
-
-
   int parent, child1, child2, status;
   child1 = fork();
   if(child1 < 0)
@@ -47,7 +52,7 @@ int main(int argv, char* argv[])
     if(child2 != 0)
     {
       /* parent process here */
-      
+
     }
     else
     {
