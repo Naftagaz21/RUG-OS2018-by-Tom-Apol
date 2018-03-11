@@ -30,6 +30,10 @@ char * readInput(FILE *stream)
         appendCharToDynString(string_ptr, c);
         appendCharToDynString(string_ptr, c2);
       }
+      else
+      {
+        continue;
+      }
     }
     appendCharToDynString(string_ptr, c);
   }
@@ -121,19 +125,28 @@ int main(int argc, char *argv[])
     exit(EXIT_FAILURE);
   }
 
+
+  Simple_List *simple_list = makeNewSimpleList();
   //for debugging
-  fprintf(stdout, "\"%s\" is valid: %s\n", input, parseInput(strings) ? "true" : "false");
+  fprintf(stdout, "\"%s\" is valid: %s\n", input, parseInput(strings, simple_list) ? "true" : "false");
 
-  // int i = 0;
-  // while(strings[i] != NULL)
-  // {
-  //   printf("strings[%d] = %s\n", i, strings[i]);
-  //   ++i;
-  // }
+  int i = 0;
+  while(strings[i] != NULL)
+  {
+    printf("strings[%d] = %s\n", i, strings[i]);
+    ++i;
+  }
 
+  freeSimpleList(simple_list);
   free(input);
   free(input_copy);
 
+  i = 0;
+  while(strings[i] != NULL)
+  {
+    free(strings[i]);
+    ++i;
+  }
   free(strings);
   return 0;
 }
