@@ -22,7 +22,7 @@ typedef struct Simple_Command_Element_List {
 
 
 typedef struct Simple_Command {
-  Simple_Command_Element_List *element_list; //NEW
+  Simple_Command_Element_List *element_list;
 } Simple_Command;
 
 
@@ -33,7 +33,7 @@ typedef struct Simple_Command_List {
 
 
 typedef struct Pipeline {
-  Simple_Command_List *simple_command_list; //NEW
+  Simple_Command_List *simple_command_list;
 } Pipeline;
 
 

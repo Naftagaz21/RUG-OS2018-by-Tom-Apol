@@ -97,6 +97,71 @@ char **tokenise(char *input)
   return (char **) DYNARR_destroyArray(arr, persistance=1);
 }
 
+/* ############################################################## */
+// TEST FUNCTION FOR CHECKING WHETHER Simple_List WORKS CORRECTLY //
+/* ############################################################## */
+
+void printRedirection(Redirection *redirection)
+{
+  if(redirection == NULL)
+    return;
+  printf(" %s %s", redirection->isInputRedirection ? "<" : ">", redirection->word);
+}
+
+void printSimpleCommandElement(Simple_Command_Element *element)
+{
+  if(element == NULL)
+    return;
+  if(element->isRedirection)
+  {
+    printRedirection(element->redirection_pointer);
+  }
+  else
+  {
+    printf(" %s", element->word);
+  }
+}
+
+void printSimpleCommandElementList(Simple_Command_Element_List *list)
+{
+  if(list == NULL)
+    return;
+  printSimpleCommandElement(&(list->element));
+  printSimpleCommandElementList(list->next);
+}
+
+void printSimpleCommand(Simple_Command *command)
+{
+  if(command == NULL)
+    return;
+  printSimpleCommandElementList(command->element_list);
+}
+
+void printSimpleCommandList(Simple_Command_List *list)
+{
+  if(list == NULL)
+    return;
+  printSimpleCommand(&(list->simple_command));
+  printSimpleCommandList(list->next);
+}
+
+void printPipeline(Pipeline *pipeline)
+{
+  if(pipeline == NULL)
+    return;
+  printSimpleCommandList(pipeline->simple_command_list);
+}
+
+void printSimpleList(Simple_List *list)
+{
+  if(list == NULL)
+    return;
+  printPipeline(&(list->pipeline));
+  if(list->hasDaemonAmpersand) printf(" &");
+  putchar('\n');
+}
+
+/* ############################################################## */
 
 int main(int argc, char *argv[])
 {
@@ -136,6 +201,8 @@ int main(int argc, char *argv[])
     printf("strings[%d] = %s\n", i, strings[i]);
     ++i;
   }
+
+  printSimpleList(simple_list);
 
   freeSimpleList(simple_list);
   free(input);

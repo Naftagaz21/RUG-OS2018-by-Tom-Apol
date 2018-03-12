@@ -34,9 +34,9 @@ void * DYNARR_destroyArray(DynamicArray *arr, int internalArrayPersistence)
   }
 
   if(arr->elemDestructorFunc != NULL)
-  for(int i = 0; i < arr->size; ++i){
-    arr->elemDestructorFunc(arr->elems[i]);
-  }
+    for(int i = 0; i < arr->size; ++i){
+      arr->elemDestructorFunc(arr->elems[i]);
+    }
   free(arr->elems);
   free(arr);
   return NULL;

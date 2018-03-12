@@ -83,7 +83,7 @@ bool parseRedirection(char **sentence, size_t *current_index_ptr, Redirection *r
     printf("parseRedirection: parseWord failed at index %ld\n", *current_index_ptr);
     return false;
   }
-  redirection_ptr->word = sentence[current_index_backup];
+  redirection_ptr->word = sentence[*current_index_ptr -1];
   return true;
 }
 
