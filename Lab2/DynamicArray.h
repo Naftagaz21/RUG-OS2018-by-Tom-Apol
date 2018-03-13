@@ -33,4 +33,14 @@ int DYNARR_resizeArr(DynamicArray *arr, size_t newCapacity);
  */
 int DYNARR_addElem(DynamicArray *arr, void *elem);
 
+/* Appends the elements of arr2 to arr1.
+ * Note that these are only references to the elements in arr2.
+ *  if DYNARR_destroyArray(arr2, 0) is called, the elements of arr2 in arr1
+ *  are destroyed as well, without arr1 being aware of this, which may lead to
+ *  double frees when DYNARR_destroyArray(arr1, 0) is called afterwards.
+ * On success returns 0, on failure returns -1.
+ * On failure, arr1 will remain unchanged.
+ */
+int DYNARR_concatArrs(DynamicArray *arr1, DynamicArray *arr2);
+
 #endif
