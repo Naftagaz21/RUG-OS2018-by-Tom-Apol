@@ -4,6 +4,7 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <unistd.h>
+#include "DynamicByteArray.h"
 
 //TODO: make sure the last process in the pipeline has the shell's stdout
 //      and as such: don't close the shell's standard streams.
@@ -28,13 +29,13 @@ int handleRedirection(Redirection *redirection)
 }
 
 //returns 0 on success, -1 on failure.
-int handleCommandlineArgument(char *arg, DynamicArray *dynArr)
+int handleCommandlineArgument(char *arg, DynamicByteArray *dynArr)
 {
-  return DYNARR_addElem(dynArr, arg);
+  return DBA_addElemToArr(dynArr, &arg);
 }
 
 //returns 0 if successful, returns -1 otherwise.
-int handleCommandElementList(Simple_Command_Element_List *list, DynamicArray *dynArr)
+int handleCommandElementList(Simple_Command_Element_List *list, DynamicByteArray *dynArr)
 {
   if(list == NULL)
     return 0;
@@ -65,7 +66,7 @@ int handleCommandList(Simple_Command_List *list, int incomingInputPipe /*TODO: u
   if(list == NULL)
     return 0;
 
-  Simple_Command_Element_List * element_list = (list->simple_command).element_list;
+  Simple_Command_Element_List *element_list = (list->simple_command).element_list;
   //check that the first element is the file path.
   if((element_list->element).isRedirection)
   {
@@ -87,10 +88,10 @@ int handleCommandList(Simple_Command_List *list, int incomingInputPipe /*TODO: u
   //recursively handle the current_element_list:
   //  -handle redirections
   //  -add commandline arguments to some kind of array.
-  DynamicArray *commandlineArguments = DYNARR_makeNewArray(sizeof(char*), NULL);
+  DynamicByteArray *commandlineArguments = DYNARR_makeNewArray(sizeof(char*));
   if(handleCommandElementList(current_element_list, commandlineArguments) < 0)
   {
-    DYNARR_destroyArray(commandlineArguments, 0);
+    free(commandlineArguments);
     return -1;
   }
 
@@ -104,7 +105,7 @@ int handleCommandList(Simple_Command_List *list, int incomingInputPipe /*TODO: u
     {
       perror("pipe() failed with error");
       //TODO: do some cleanup
-      DYNARR_destroyArray(commandlineArguments, 0);
+      free(commandlineArguments);
       return -1;
     }
 
@@ -112,22 +113,21 @@ int handleCommandList(Simple_Command_List *list, int incomingInputPipe /*TODO: u
     {
       perror("dup2() failed with error");
       //TODO: do some cleanup
-      DYNARR_destroyArray(commandlineArguments, 0);
+      free(commandlineArguments);
       return -1;
     }
     outgoingPipe = newPipe[0];
   }
 
   //fork and execute
-  DYNARR_addElem(commandlineArguments, NULL);
-  char **newargv = (const **) DYNARR_destroyArray(commandlineArguments, 1);
-
+  DBA_addElemToArr(commandlineArguments, &((void*) NULL)); //NOTE: might not compile. tough luck.
+  char **newargv = (char **) commandlineArguments->elements;
+  free(commandlineArguments);
   int childID = fork();
   if(childID < 0)
   {
     perror("fork() failed with error");
     //TODO: do some cleanup
-    DYNARR_destroyArray(commandlineArguments, 0);
     return -1;
   }
 

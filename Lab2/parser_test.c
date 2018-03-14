@@ -3,8 +3,7 @@
 #include <string.h>
 #include <errno.h>
 #include "parser.h"
-#include "DynamicString.h"
-#include "DynamicArray.h"
+#include "DynamicByteArray.h"
 
 //reads input from stream and returns a c-string.
 //returns NULL on failure.
@@ -12,10 +11,10 @@
 //callers must free the allocated string.
 char * readInput(FILE *stream)
 {
-  DynamicString *string_ptr = makeDynamicString();
+  DynamicByteArray *string_ptr = DBA_makeNewDynamicByteArray(sizeof(char));
   if(string_ptr == NULL)
   {
-    fprintf(stderr, "error in readInput: could not make a dynamic string\n");
+    fprintf(stderr, "error in readInput: could not make a dynamic bytearray\n");
     return NULL;
   }
 
@@ -27,66 +26,42 @@ char * readInput(FILE *stream)
     {
       if((c2 = fgetc(stream)) != '\n')
       {
-        appendCharToDynString(string_ptr, c);
-        appendCharToDynString(string_ptr, c2);
+        DBA_addElemToArr(string_ptr, &c);
+        DBA_addElemToArr(string_ptr, &c2);
       }
       else
       {
         continue;
       }
     }
-    appendCharToDynString(string_ptr, c);
+    DBA_addElemToArr(string_ptr, &c);
   }
-  appendCharToDynString(string_ptr, '\0');
+  DBA_addElemToArr(string_ptr, "");
 
-  char *retval = string_ptr->string;
+  char *retval = (char*) string_ptr->elements;
   //cleanup as we no longer use string_ptr anymore.
   free(string_ptr);
   return retval;
 }
 
-/* string destructor for use with DYNARR_makeNewArray.
- * since we are supposed to use the c99 compiler and not the gcc compiler,
- * this function is defined globally instead of inside functions calling
- * DYNARR_makeNewArray.
- */
-void myStringDestructor(void * string)
-{
-  free(string);
-}
 
 //will split input into multiple strings.
 //ends array with a NULL pointer.
 //returns NULL on failure.
 char **tokenise(char *input)
 {
-  DynamicArray *arr = DYNARR_makeNewArray(sizeof(char *), myStringDestructor);
+  DynamicByteArray *arr = DBA_makeNewDynamicByteArray(sizeof(char*));
   if(arr == NULL)
     return NULL;
 
   char *token = strtok(input, " ");
-  char *buffer;
-  int persistance; //exists for the sole purpose of code readability
 
   while(1) //breaks when token == NULL, after storing a terminating NULL pointer in our array.
   {
-    if(token != NULL)
-    {
-      buffer = malloc((strlen(token) +1) * sizeof(char));
-      if(buffer == NULL)
-      {
-        perror("malloc");
-        DYNARR_destroyArray(arr, persistance=0);
-        return NULL;
-      }
-      strcpy(buffer, token);
-    }
-
-    if(DYNARR_addElem(arr, token == NULL ? NULL : (void *) buffer) < 0)
+    if(DBA_addElemToArr(arr, &token) < 0)
     {
       fprintf(stderr, "error in tokenise: failed DYNARR_addElem\n");
-      DYNARR_destroyArray(arr, persistance=0);
-      free(buffer);
+      free(arr);
       return NULL;
     }
 
@@ -94,7 +69,9 @@ char **tokenise(char *input)
       break;
     token = strtok(NULL, " ");
   }
-  return (char **) DYNARR_destroyArray(arr, persistance=1);
+  char **retval = (char**) arr->elements;
+  free(arr);
+  return retval;
 }
 
 /* ############################################################## */
@@ -165,35 +142,26 @@ void printSimpleList(Simple_List *list)
 
 int main(int argc, char *argv[])
 {
-  char *input, *input_copy, **strings;
+  char *input, **strings;
   input = readInput(stdin);
   if(input == NULL)
   {
     exit(EXIT_FAILURE);
   }
 
-  // printf("input = %s\n", input);
+  printf("input = %s\n", input);
 
-  //for debugging
-  input_copy = malloc((strlen(input)+1) * sizeof(char));
-  if(input_copy == NULL)
-  {
-    perror("malloc");
-    free(input);
-    exit(EXIT_FAILURE);
-  }
-  strcpy(input_copy, input);
-
-  strings = tokenise(input_copy);
+  strings = tokenise(input);
   if(strings == NULL)
   {
+    free(input);
     exit(EXIT_FAILURE);
   }
 
 
   Simple_List *simple_list = makeNewSimpleList();
   //for debugging
-  fprintf(stdout, "\"%s\" is valid: %s\n", input, parseInput(strings, simple_list) ? "true" : "false");
+  fprintf(stdout, "aforementioned input is valid: %s\n", parseInput(strings, simple_list) ? "true" : "false");
 
   int i = 0;
   while(strings[i] != NULL)
@@ -206,14 +174,6 @@ int main(int argc, char *argv[])
 
   freeSimpleList(simple_list);
   free(input);
-  free(input_copy);
-
-  i = 0;
-  while(strings[i] != NULL)
-  {
-    free(strings[i]);
-    ++i;
-  }
   free(strings);
   return 0;
 }

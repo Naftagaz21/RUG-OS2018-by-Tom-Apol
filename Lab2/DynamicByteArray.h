@@ -25,7 +25,7 @@ int DBA_addElemToArr(DynamicByteArray *arr, void *bytestring);
  * this particular index. Should be manually cast to an appropriate type pointer
  * and dereferenced for use.
  */
-void * DBA_getElem(DynamicByteArray *arr, size_t index)
+void * DBA_getElem(DynamicByteArray *arr, size_t index);
 
 /* Standard functions for retrieving elements with a standard type. */
 char DBA_getElem_CHAR(DynamicByteArray *arr, size_t index);

@@ -4,7 +4,7 @@
 //returns NULL on failure.
 DynamicByteArray * DBA_makeNewDynamicByteArray(size_t type_size)
 {
-  DynamicByteArray arr = malloc(sizeof(DynamicByteArray));
+  DynamicByteArray *arr = malloc(sizeof(DynamicByteArray));
   if(arr == NULL)
     return NULL;
   arr->elements = malloc(DBA_INITSIZE * type_size);
@@ -27,7 +27,7 @@ int DBA_resizeArr(DynamicByteArray *arr, size_t new_nr_of_elements)
     return -1;
 
   arr->elements = tempPtr;
-  arr->capacity = newCapacity;
+  arr->capacity = new_nr_of_elements;
   return 0;
 }
 
@@ -37,13 +37,13 @@ int DBA_addElemToArr(DynamicByteArray *arr, void *bytestring)
   //TODO: resize if needed
   if(arr->nr_of_elements == arr->capacity)
   {
-    if(resizeArr(arr, 2*arr->size) < 0)
+    if(DBA_resizeArr(arr, 2*arr->capacity) < 0)
       return -1;
   }
 
-  for(size_t i = 0; i < type_size; ++i)
+  for(size_t i = 0; i < arr->type_size; ++i)
   {
-    elems[arr->nr_of_elements * arr->type_size + i] = ((char *) bytestring)[i];
+    arr->elements[arr->nr_of_elements * arr->type_size + i] = ((char *) bytestring)[i];
   }
   ++arr->nr_of_elements;
   return 0;
