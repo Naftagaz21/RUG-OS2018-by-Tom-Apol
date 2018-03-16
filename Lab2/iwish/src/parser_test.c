@@ -4,6 +4,7 @@
 #include <errno.h>
 #include "parser.h"
 #include "DynamicByteArray.h"
+#include "interpreter.h"
 
 //reads input from stream and returns a c-string.
 //returns NULL on failure.
@@ -11,6 +12,7 @@
 //callers must free the allocated string.
 char * readInput(FILE *stream)
 {
+
   DynamicByteArray *string_ptr = DBA_makeNewDynamicByteArray(sizeof(char));
   if(string_ptr == NULL)
   {
@@ -82,20 +84,22 @@ void printRedirection(Redirection *redirection)
 {
   if(redirection == NULL)
     return;
-  printf(" %s %s", redirection->isInputRedirection ? "<" : ">", redirection->word);
+  printf("%s %s ", redirection->isInputRedirection ? "<" : ">", redirection->word);
 }
 
 void printSimpleCommandElement(Simple_Command_Element *element)
 {
   if(element == NULL)
     return;
+  if(element->isRedirection == -1)
+    return; //uninitialised element
   if(element->isRedirection)
   {
     printRedirection(element->redirection_pointer);
   }
   else
   {
-    printf(" %s", element->word);
+    printf("%s ", element->word);
   }
 }
 
@@ -119,7 +123,11 @@ void printSimpleCommandList(Simple_Command_List *list)
   if(list == NULL)
     return;
   printSimpleCommand(&(list->simple_command));
-  printSimpleCommandList(list->next);
+  if(list->next != NULL)
+  {
+    printf("| ");
+    printSimpleCommandList(list->next);
+  }
 }
 
 void printPipeline(Pipeline *pipeline)
@@ -134,7 +142,7 @@ void printSimpleList(Simple_List *list)
   if(list == NULL)
     return;
   printPipeline(&(list->pipeline));
-  if(list->hasDaemonAmpersand) printf(" &");
+  if(list->hasDaemonAmpersand) printf("&");
   putchar('\n');
 }
 
@@ -162,7 +170,7 @@ int main(int argc, char *argv[])
   Simple_List *simple_list = makeNewSimpleList();
   //for debugging
   fprintf(stdout, "aforementioned input is valid: %s\n", parseInput(strings, simple_list) ? "true" : "false");
-
+  //
   int i = 0;
   while(strings[i] != NULL)
   {
@@ -172,8 +180,11 @@ int main(int argc, char *argv[])
 
   printSimpleList(simple_list);
 
+
+  int exitStatus = interpretSimpleList(simple_list);
+
   freeSimpleList(simple_list);
   free(input);
   free(strings);
-  return 0;
+  return exitStatus;
 }

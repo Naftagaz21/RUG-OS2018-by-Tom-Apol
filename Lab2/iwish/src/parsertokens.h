@@ -9,7 +9,6 @@ typedef struct Redirection {
 
 typedef struct Simple_Command_Element {
   int isRedirection;
-  //TODO: think about whether this should be a pointer or just the actual thing itself.
   Redirection *redirection_pointer; //if it is not a redirection, this value should be ignored.
   char* word; //if it is a redirection, this value should be ignored.
 } Simple_Command_Element;

@@ -58,6 +58,7 @@ Simple_Command_Element_List * makeNewSimpleCommandElementList()
     perror("malloc");
     return NULL;
   }
+  (simple_command_element_list->element).isRedirection = -1;
   (simple_command_element_list->element).redirection_pointer = NULL;
   (simple_command_element_list->element).word = NULL;
   simple_command_element_list->next = NULL;

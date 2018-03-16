@@ -90,3 +90,9 @@ void * DBA_getElem_VOIDPTR(DynamicByteArray *arr, size_t index)
 {
   return * ((void **) DBA_getElem(arr, index));
 }
+
+//returns a reference to the internal byte-array
+void * DBA_getInternalArray(DynamicByteArray *arr)
+{
+  return arr->elements;
+}

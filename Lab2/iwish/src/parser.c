@@ -102,52 +102,13 @@ bool parseLetter(char **sentence, size_t *current_index_ptr, size_t *current_let
     ++(*current_letter_index_ptr);
     return true;
   }
-  printf("parseLetter: %c is not valid; at index %ld\n", letter, *current_index_ptr);
-  return false;
-}
-
-
-bool parseWord2(char **sentence, size_t *current_index_ptr, size_t *current_letter_index_ptr)
-{
-  // size_t current_index_backup = *current_index_ptr;
-  if(sentence[*current_index_ptr] == NULL)
+  else if(letter == '-' || letter == '.' || letter == '/' || letter == '_')
   {
-    printf("parseWord2: sentence[%ld] == NULL\n", *current_index_ptr);
-    return false;
-  }
-
-  //can be empty
-  if(sentence[*current_index_ptr][*current_letter_index_ptr] == '\0')
-  {
-    printf("parseWord2: sentence[%ld][%ld] == '\\0'\n", *current_index_ptr, *current_letter_index_ptr);
+    ++(*current_letter_index_ptr);
     return true;
   }
-
-  if(!parseLetter(sentence, current_index_ptr, current_letter_index_ptr))
-  {
-    switch(sentence[*current_index_ptr][*current_letter_index_ptr])
-    {
-      case '/' :
-        break;
-      case '-' :
-        break;
-      case '_' :
-        break;
-      case '.' :
-        break;
-      default :
-        printf("parseWord2: letter = %c, which is invalid; at index %ld\n", sentence[*current_index_ptr][*current_letter_index_ptr], *current_index_ptr);
-        return false;
-    }
-    ++(*current_letter_index_ptr);
-  }
-  if(!parseWord2(sentence, current_index_ptr, current_letter_index_ptr))
-  {
-    // *current_index_ptr = current_index_backup;
-    // printf("parseWord2: parseWord2 (rec) failed at index %ld\n", *current_index_ptr);
-    // return false;
-  }
-  return true;
+  printf("parseLetter: %c is not valid; at index %ld\n", letter, *current_index_ptr);
+  return false;
 }
 
 
@@ -160,14 +121,15 @@ bool parseWord(char **sentence, size_t *current_index_ptr)
   }
 
   size_t current_letter_index = 0;
-  if(!parseLetter(sentence, current_index_ptr, &current_letter_index))
+  while(sentence[*current_index_ptr][current_letter_index] != '\0')
   {
-    printf("parseWord: parseLetter failed at index %ld\n", *current_index_ptr);
-    return false;
+    if(!parseLetter(sentence, current_index_ptr, &current_letter_index))
+    {
+      printf("parseWord: parseLetter failed at index %ld and letter_index %ld\n", *current_index_ptr, current_letter_index);
+      return false;
+    }
   }
 
-  if(sentence[*current_index_ptr][current_letter_index] != '\0')
-    parseWord2(sentence, current_index_ptr, &current_letter_index);
   ++(*current_index_ptr);
   return true;
 }
@@ -206,16 +168,6 @@ bool parseSimpleCommandElement(char **sentence, size_t *current_index_ptr, Simpl
       return false;
     }
   }
-  // if(!parseWord(sentence, current_index_ptr))
-  // {
-  //   *current_index_ptr = current_index_backup;
-  //   if(!parseRedirection(sentence, current_index_ptr))
-  //   {
-  //     *current_index_ptr = current_index_backup;
-  //     printf("parseSimpleCommand: parseWord and parseRedirection failed at index %ld\n", *current_index_ptr);
-  //     return false;
-  //   }
-  // }
   return true;
 }
 
@@ -294,6 +246,14 @@ bool parsePipeLine(char **sentence, size_t *current_index_ptr, Simple_Command_Li
     printf("parsePipeLine: sentence[%ld] == NULL\n", *current_index_ptr);
     return false;
   }
+
+  if(!parseWord(sentence, current_index_ptr))
+  {
+    fprintf(stderr, "error: a command must start with a program path. error at token %s\n", sentence[*current_index_ptr]);
+    return false;
+  }
+  else
+    --*current_index_ptr;
 
   if(!parseSimpleCommand(sentence, current_index_ptr, (simple_command_list_ptr->simple_command).element_list)){
     *current_index_ptr = current_index_backup;

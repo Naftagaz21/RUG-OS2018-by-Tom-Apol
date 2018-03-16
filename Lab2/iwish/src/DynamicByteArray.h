@@ -35,4 +35,6 @@ float DBA_getElem_FLOAT(DynamicByteArray *arr, size_t index);
 double DBA_getElem_DOUBLE(DynamicByteArray *arr, size_t index);
 void * DBA_getElem_VOIDPTR(DynamicByteArray *arr, size_t index);
 
+//returns a reference to the internal byte-array.
+void * DBA_getInternalArray(DynamicByteArray *arr);
 #endif
