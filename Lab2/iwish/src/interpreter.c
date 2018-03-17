@@ -15,11 +15,17 @@
 //returns 0 on success, -1 on failure.
 int handleRedirection(Redirection *redirection)
 {
-  //not sure if mode S_IRWXU is the correct mode here
-  int file = creat(redirection->word, S_IRWXU);
+  if(redirection == NULL)
+    return -1;
+
+  int file;
+  if(redirection->isInputRedirection)
+    file = open(redirection->word, O_RDONLY);
+  else
+    file = creat(redirection->word, S_IRWXU);
+
   if(file < 0)
   {
-    //something went wrong
     perror("creat() failed with error");
     return -1;
   }
@@ -28,6 +34,7 @@ int handleRedirection(Redirection *redirection)
     perror("dup2() failed with error");
     return -1;
   }
+
   return 0;
 }
 

@@ -84,7 +84,7 @@ void printRedirection(Redirection *redirection)
 {
   if(redirection == NULL)
     return;
-  printf("%s %s ", redirection->isInputRedirection ? "<" : ">", redirection->word);
+  printf("redirection: %s %s ", redirection->isInputRedirection ? "<" : ">", redirection->word);
 }
 
 void printSimpleCommandElement(Simple_Command_Element *element)
@@ -99,7 +99,7 @@ void printSimpleCommandElement(Simple_Command_Element *element)
   }
   else
   {
-    printf("%s ", element->word);
+    printf("command element: %s ", element->word);
   }
 }
 
@@ -125,7 +125,7 @@ void printSimpleCommandList(Simple_Command_List *list)
   printSimpleCommand(&(list->simple_command));
   if(list->next != NULL)
   {
-    printf("| ");
+    printf("pipeline: | ");
     printSimpleCommandList(list->next);
   }
 }
@@ -169,7 +169,8 @@ int main(int argc, char *argv[])
 
   Simple_List *simple_list = makeNewSimpleList();
   //for debugging
-  fprintf(stdout, "aforementioned input is valid: %s\n", parseInput(strings, simple_list) ? "true" : "false");
+  int parseInputExitcode = parseInput(strings, simple_list);
+  fprintf(stdout, "aforementioned input is valid: %s\n", parseInputExitcode ? "true" : "false");
   //
   int i = 0;
   while(strings[i] != NULL)
@@ -177,11 +178,14 @@ int main(int argc, char *argv[])
     printf("strings[%d] = %s\n", i, strings[i]);
     ++i;
   }
-
   printSimpleList(simple_list);
 
+  int exitStatus = 0;
+  if(parseInputExitcode)
+  {
+    exitStatus = interpretSimpleList(simple_list);
+  }
 
-  int exitStatus = interpretSimpleList(simple_list);
 
   freeSimpleList(simple_list);
   free(input);
