@@ -4,6 +4,8 @@
 #include <string.h>
 #include <errno.h>
 #include <sys/wait.h>
+#include <unistd.h>
+#include <signal.h>
 #include "parser.h"
 #include "DynamicByteArray.h"
 #include "interpreter.h"
@@ -15,9 +17,20 @@
  */
 void interpretInput(char **strings, char* input)
 {
-  int child_pid = safelyFork();
-  if(child_pid < 0)
+  Simple_List *simple_list = makeNewSimpleList();
+  int isValidInput = parseInput(strings, simple_list);
+
+  if(!isValidInput) //invalid input, so cleanup and stop.
   {
+    printf("error: invalid input\n");
+    freeSimpleList(simple_list);
+    return;
+  }
+
+  int child_pid = safelyFork();
+  if(child_pid < 0) //fork went wrong, so complete cleanup and terminate.
+  {
+    freeSimpleList(simple_list);
     free(strings);
     free(input);
     printf("error: could not fork. exiting shell\n");
@@ -25,25 +38,25 @@ void interpretInput(char **strings, char* input)
   }
   if(child_pid == 0)
   {
-    //Child
-    Simple_List *simple_list = makeNewSimpleList();
-    int isValidInput = parseInput(strings, simple_list);
+    //Child (Job handler)
     int exitStatus = 0;
 
-    if(isValidInput)
-      exitStatus = interpretSimpleList(simple_list);
-    else
-      printf("error: invalid input\n");
+    exitStatus = interpretSimpleList(simple_list);
+
     freeSimpleList(simple_list);
     free(strings);
     free(input);
     exit(exitStatus);
   }
-  //Parent (Shell itself)
-  wait(NULL);
+  else
+  {
+    //Parent (Shell itself)
+    if(!simple_list->hasDaemonAmpersand) //wait for the job handler.
+      waitpid(child_pid, NULL, 0);
+  }
 }
 
-/* INPUT HANDLING */
+/* #################### INPUT HANDLING #################### */
 
 //reads input from stream and returns a c-string.
 //returns NULL on failure.
@@ -115,7 +128,7 @@ char **tokenise(char *input)
   return retval;
 }
 
-/* OTHER */
+/* #################### OTHER #################### */
 
 //exit under these commands
 int stringIsExitKeyword(char *string)
@@ -140,10 +153,18 @@ void printWelcome()
   printf("Type \"exit\", \"quit\" or \"q\" to exit the shell.\n\n");
 }
 
-/* MAIN */
+/* #################### MAIN #################### */
 
 int main(int argc, char *argv[])
 {
+  //make sure we don't have to wait for our children, to prevent zombie processes.
+  struct sigaction newsigaction;
+  newsigaction.sa_handler = SIG_DFL; //TODO: perhaps set this to SIG_IGN
+  sigemptyset(&newsigaction.sa_mask);
+  newsigaction.sa_flags = SA_NOCLDWAIT;
+
+  sigaction(SIGCLD, &newsigaction, NULL);
+
   printWelcome();
 
   char *input = NULL, **strings = NULL;
@@ -178,6 +199,5 @@ int main(int argc, char *argv[])
 
   free(strings);
   free(input);
-
   return 0;
 }

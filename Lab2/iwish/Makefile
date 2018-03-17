@@ -1,5 +1,5 @@
 CC = gcc
-CFLAGS = -Wall -Werror -std=c99 -pedantic
+CFLAGS = -D_DEFAULT_SOURCE -Wall -Werror -std=c99 -pedantic
 DEBUGFLAGS = -g
 SOURCEDIR := src
 

@@ -3,6 +3,7 @@
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <sys/stat.h>
+#include <signal.h>
 #include <fcntl.h>
 #include <unistd.h>
 #include "DynamicByteArray.h"
@@ -131,13 +132,13 @@ void closePipe(int *pipe)
   }
 }
 
-//returns 0 if successful, returns -1 otherwise.
+//returns EXIT_success if successful, returns EXIT_FAILURE otherwise.
 int interpretSimpleList(Simple_List *list)
 {
   if(list == NULL)
   {
     fprintf(stderr, "error in interpretSimpleList: cannot interpret NULL\n");
-    return -1;
+    return EXIT_FAILURE;
   }
 
   Simple_Command_List *current_command_list = (list->pipeline).simple_command_list;
@@ -152,11 +153,9 @@ int interpretSimpleList(Simple_List *list)
     {
       if(pipe(outgoingPipe) < 0)
       {
-        //TODO: think about whether it is wise to close all of these pipes.
-        //they'll be released when the process exits anyway.
         closePipe(incomingPipe);
         closePipe(outgoingPipe);
-        return -1;
+        return EXIT_FAILURE;
       }
     }
     else
@@ -167,7 +166,7 @@ int interpretSimpleList(Simple_List *list)
     {
       closePipe(incomingPipe);
       closePipe(outgoingPipe);
-      return -1;
+      return EXIT_FAILURE;
     }
     else if(child_pid == 0)
     {
@@ -178,7 +177,7 @@ int interpretSimpleList(Simple_List *list)
       handleCommandList(current_command_list, incomingPipe[0], outgoingPipe[1]);
 
       //if we get here, execution of the command failed.
-      return -1;
+      return EXIT_FAILURE;
     }
     else
     {
@@ -201,17 +200,17 @@ int interpretSimpleList(Simple_List *list)
     }
   }
 
-  if(!list->hasDaemonAmpersand)
+  int exitstatus = EXIT_SUCCESS;
+  int wstatus;
+
+  //wait for all children to finish.
+  while(1)
   {
-    //wait for all children to finish.
-    int wstatus;
-    while(1)
-    {
-      if(wait(&wstatus) == -1)
-        break; //no more children to wait for.
-      if(WIFEXITED(wstatus) && WEXITSTATUS(wstatus) == EXIT_FAILURE)
-        return -1; //exit and by doing so, send a SIGINT to all children.
-    }
+    if(wait(&wstatus) == -1)
+      break; //no more children to wait for.
+    if(WIFEXITED(wstatus) && WEXITSTATUS(wstatus) == EXIT_FAILURE)
+      exitstatus = EXIT_FAILURE; //exit and by doing so, send a SIGINT to all children.
   }
-  return 0;
+
+  return exitstatus;
 }
