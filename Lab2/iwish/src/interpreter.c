@@ -22,7 +22,7 @@ int handleRedirection(Redirection *redirection)
   if(redirection->isInputRedirection)
     file = open(redirection->word, O_RDONLY);
   else
-    file = creat(redirection->word, S_IRWXU);
+    file = creat(redirection->word, 0664); //permissions: -rw-rw-r--
 
   if(file < 0)
   {
@@ -176,7 +176,8 @@ int interpretSimpleList(Simple_List *list)
       if(incomingPipe[1] != -1) close(incomingPipe[1]);
       if(outgoingPipe[0] != -1) close(outgoingPipe[0]);
       handleCommandList(current_command_list, incomingPipe[0], outgoingPipe[1]);
-      //if we get here, we fucked up.
+
+      //if we get here, execution of the command failed.
       return -1;
     }
     else
