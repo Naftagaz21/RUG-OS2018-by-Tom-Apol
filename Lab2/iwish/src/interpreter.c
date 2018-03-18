@@ -67,9 +67,6 @@ int handleCommandElementList(Simple_Command_Element_List *list, DynamicByteArray
 }
 
 
-//TODO: check if we need to keep track of all child-processes we're making,
-//      in case the shell receives a SIG_INT and it needs to terminate all
-//      of its living children.
 //returns 0 if successful, returns -1 otherwise.
 //if incomingPipe < 0, that pipe will not be connected.
 int handleCommandList(Simple_Command_List *list, int incomingInputPipe, int incomingOutputPipe)

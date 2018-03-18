@@ -11,7 +11,10 @@ Simple_List * makeNewSimpleList()
     return NULL;
   }
 
-  (simple_list->pipeline).simple_command_list = makeNewSimpleCommandList(); //test whether this fails
+  (simple_list->pipeline).simple_command_list = makeNewSimpleCommandList();
+  if((simple_list->pipeline).simple_command_list == NULL)
+    return NULL;
+
   simple_list->hasDaemonAmpersand = 0; //default to false.
   return simple_list;
 }
@@ -25,7 +28,7 @@ void freeSimpleList(Simple_List *list)
   free(list);
 }
 
-
+//Returns NULL when unsuccessful.
 Simple_Command_List * makeNewSimpleCommandList()
 {
   Simple_Command_List *simple_command_list = malloc(sizeof(Simple_Command_List));
@@ -34,7 +37,10 @@ Simple_Command_List * makeNewSimpleCommandList()
     perror("malloc");
     return NULL;
   }
-  (simple_command_list->simple_command).element_list = makeNewSimpleCommandElementList(); //test whether this succeeds
+  (simple_command_list->simple_command).element_list = makeNewSimpleCommandElementList();
+  if((simple_command_list->simple_command).element_list == NULL)
+    return NULL;
+
   simple_command_list->next = NULL;
   return simple_command_list;
 }
@@ -58,7 +64,7 @@ Simple_Command_Element_List * makeNewSimpleCommandElementList()
     perror("malloc");
     return NULL;
   }
-  (simple_command_element_list->element).isRedirection = -1;
+  (simple_command_element_list->element).isRedirection = -1; //default to "uninitialised"
   (simple_command_element_list->element).redirection_pointer = NULL;
   (simple_command_element_list->element).word = NULL;
   simple_command_element_list->next = NULL;
