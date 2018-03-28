@@ -85,7 +85,7 @@ void vm_notify_sig_wrapper(endpoint_t ep);
 /* time.c */
 int do_stime(void);
 int do_time(void);
-int do_utctime(void);
+int do_utctime(void); /* ADDED FOR OS-EXERCISE */
 int do_times(void);
 
 /* trace.c */

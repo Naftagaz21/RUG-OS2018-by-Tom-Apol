@@ -35,12 +35,12 @@ int do_time()
 }
 
 /*===========================================================================*
- *        do_utctime          *
+ *        do_utctime          * ADDED FOR OS-EXERCISE *
  *===========================================================================*/
 int do_utctime()
 {
 /* Perform the utctime(tp) system call. This returns the time in seconds since
- * 1.1.1970, while taking leap seconds into account (until June 30 2018)
+ * 1.1.1970, while taking leap seconds into account (until and excluding June 30 2018)
  */
   clock_t uptime, boottime;
   time_t utctime;
@@ -51,13 +51,15 @@ int do_utctime()
   utctime = (boottime + (uptime/system_hz));
 
   //hardcoded timestamps after which a leap second was inserted
-  time_t leapsecondreference[27] = {78796799, 94694399, 126230399, 157766399, 189302399, 220924799, 252460799, 283996799, 315532799, 362793599, 394329599, 425865599, 489023999, 567993599, 631151999, 662687999, 709948799, 741484799, 773020799, 820454399, 867715199, 915148799, 1136073599, 1230767999, 1341100799, 1435708799, 1483228799};
+  time_t leapsecond_reference[27] = {78796799, 94694399, 126230399, 157766399, \
+    189302399, 220924799, 252460799, 283996799, 315532799, 362793599, 394329599, \
+    425865599, 489023999, 567993599, 631151999, 662687999, 709948799, 741484799, \
+    773020799, 820454399, 867715199, 915148799, 1136073599, 1230767999, 1341100799, \
+    1435708799, 1483228799};
   int i;
   for(i = 0; i < 27; ++i)
-  {
-    if(!(utctime > leapsecondreference[i]))
+    if(!(utctime > leapsecond_reference[i]))
       break;
-  }
 
   mp->mp_reply.reply_time = utctime + i;
   mp->mp_reply.reply_utime = (uptime%system_hz)*1000000/system_hz;
