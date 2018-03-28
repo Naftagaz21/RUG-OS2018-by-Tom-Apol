@@ -14,6 +14,6 @@ time_t gettime()
 int main(void)
 {
   printf("Current do_time is %d.\n", gettime());
-  printf("Current librarycall to utctime is %d.\n", utctime());
+  printf("Current utctime is %d.\n", utctime());
   return 0;
 }
