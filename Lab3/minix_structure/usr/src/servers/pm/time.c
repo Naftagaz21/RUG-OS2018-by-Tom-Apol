@@ -41,6 +41,8 @@ int do_utctime()
 {
 /* Perform the utctime(tp) system call. This returns the time in seconds since
  * 1.1.1970, while taking leap seconds into account (until and excluding June 30 2018)
+ * Since time_t is a 32-bit integer in this version of Minix, we will run into integer
+ * overflow issues around the year 2038.
  */
   clock_t uptime, boottime;
   time_t utctime;
@@ -61,7 +63,7 @@ int do_utctime()
     if(!(utctime > leapsecond_reference[i]))
       break;
 
-  mp->mp_reply.reply_time = utctime + i;
+  mp->mp_reply.reply_time = utctime + i + 10; //add 10 inherent leap seconds.
   mp->mp_reply.reply_utime = (uptime%system_hz)*1000000/system_hz;
 
   return(OK);
